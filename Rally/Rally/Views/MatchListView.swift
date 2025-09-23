@@ -14,7 +14,7 @@ struct MatchListView: View {
     @State private var viewModel = MatchListViewModel()
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 if viewModel.isEmpty {
                     // MARK: - Empty State

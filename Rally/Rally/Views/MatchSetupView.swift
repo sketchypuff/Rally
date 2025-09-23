@@ -60,64 +60,76 @@ struct MatchSetupView: View {
                     }
                     
                     // MARK: - Match Settings
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Match Settings")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                        
-                        // Target Points
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Target Points per Set")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
+                    VStack(spacing: 0) {
+                        // Match Configuration Card
+                        VStack(alignment: .leading, spacing: 16) {
+                            // Match Configuration Row
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 16) {
+                                    // Total Points in Set
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("Total points in a set")
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                        
+                                        TextField("Enter points", value: $viewModel.targetPoints, format: .number)
+                                            .keyboardType(.numberPad)
+                                            .textFieldStyle(PlainTextFieldStyle())
+                                            .font(.title2)
+                                            .fontWeight(.semibold)
+                                            .multilineTextAlignment(.center)
+                                            .padding()
+                                            .background(Color(.systemBackground))
+                                            .cornerRadius(8)
+                                            .onChange(of: viewModel.targetPoints) { _, newValue in
+                                                // Validate input range (1-50)
+                                                let clampedValue = max(1, min(50, newValue))
+                                                if clampedValue != newValue {
+                                                    viewModel.targetPoints = clampedValue
+                                                }
+                                                viewModel.setTargetPoints(clampedValue)
+                                            }
+                                    }
+                                    
+                                    // Total Sets
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("Total sets")
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                        
+                                        TextField("Enter sets", value: $viewModel.bestOfSets, format: .number)
+                                            .keyboardType(.numberPad)
+                                            .textFieldStyle(PlainTextFieldStyle())
+                                            .font(.title2)
+                                            .fontWeight(.semibold)
+                                            .multilineTextAlignment(.center)
+                                            .padding()
+                                            .background(Color(.systemBackground))
+                                            .cornerRadius(8)
+                                            .onChange(of: viewModel.bestOfSets) { _, newValue in
+                                                // Validate input range (1-7) and ensure odd numbers only
+                                                let clampedValue = max(1, min(7, newValue))
+                                                let oddValue = clampedValue % 2 == 0 ? clampedValue + 1 : clampedValue
+                                                let finalValue = min(7, oddValue) // Ensure we don't exceed 7
+                                                
+                                                if finalValue != newValue {
+                                                    viewModel.bestOfSets = finalValue
+                                                }
+                                                viewModel.setBestOfSets(finalValue)
+                                            }
+                                    }
+                                }
+                            }
                             
-                            HStack {
-                                Stepper(value: $viewModel.targetPoints, in: 1...50) {
-                                    Text("\(viewModel.targetPoints)")
-                                        .font(.title2)
-                                        .fontWeight(.semibold)
-                                        .frame(minWidth: 40)
+                            // Deuce Rule Toggle
+                            Toggle("Deuce Rule (Win by 2)", isOn: $viewModel.isDeuceEnabled)
+                                .onChange(of: viewModel.isDeuceEnabled) { _, _ in
+                                    viewModel.toggleDeuce()
                                 }
-                                .onChange(of: viewModel.targetPoints) { _, newValue in
-                                    viewModel.setTargetPoints(newValue)
-                                }
-                                
-                                Spacer()
-                                
-                                Text("points")
-                                    .foregroundColor(.secondary)
-                            }
                         }
-                        
-                        // Best of Sets
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Best of Sets")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            
-                            HStack {
-                                Stepper(value: $viewModel.bestOfSets, in: 1...7, step: 2) {
-                                    Text("\(viewModel.bestOfSets)")
-                                        .font(.title2)
-                                        .fontWeight(.semibold)
-                                        .frame(minWidth: 40)
-                                }
-                                .onChange(of: viewModel.bestOfSets) { _, newValue in
-                                    viewModel.setBestOfSets(newValue)
-                                }
-                                
-                                Spacer()
-                                
-                                Text("sets")
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        
-                        // Deuce Rule Toggle
-                        Toggle("Deuce Rule (Win by 2)", isOn: $viewModel.isDeuceEnabled)
-                            .onChange(of: viewModel.isDeuceEnabled) { _, _ in
-                                viewModel.toggleDeuce()
-                            }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
                     }
                     
                     // MARK: - Notes Section
@@ -127,12 +139,18 @@ struct MatchSetupView: View {
                             .fontWeight(.semibold)
                         
                         TextField("Add any notes about this match...", text: $viewModel.notes, axis: .vertical)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .textFieldStyle(PlainTextFieldStyle())
                             .lineLimit(3...6)
+                            .padding()
+                            .background(Color(.systemBackground))
+                            .cornerRadius(8)
                             .onChange(of: viewModel.notes) { _, newValue in
                                 viewModel.setNotes(newValue)
                             }
                     }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
                     
                     // MARK: - Validation Errors
                     if !viewModel.validationErrors.isEmpty {
@@ -180,6 +198,7 @@ struct MatchSetupView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Match Setup")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -255,8 +274,6 @@ struct SinglesParticipantSelection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            
-            
             VStack(spacing: 12) {
                 // Player A Selection
                 ParticipantPicker(
@@ -275,6 +292,9 @@ struct SinglesParticipantSelection: View {
                 )
             }
         }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
     }
 }
 
@@ -306,6 +326,9 @@ struct DoublesParticipantSelection: View {
                 )
             }
         }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
     }
 }
 
@@ -344,7 +367,7 @@ struct ParticipantPicker: View {
                         .foregroundColor(.secondary)
                 }
                 .padding()
-                .background(Color(.systemGray6))
+                .background(Color(.systemBackground))
                 .cornerRadius(8)
             }
         }

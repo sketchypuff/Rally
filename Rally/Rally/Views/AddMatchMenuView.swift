@@ -25,8 +25,10 @@ struct AddMatchMenuView: View {
                     icon: "play.circle.fill",
                     color: .green
                 ) {
+                    print("🎾 AddMatchMenuView: Start live match button tapped")
                     matchSetupMode = .liveMatch
                     showingMatchSetup = true
+                    print("🎾 AddMatchMenuView: Showing match setup: \(showingMatchSetup)")
                 }
                 
                 // Log Completed Match Button
@@ -36,15 +38,20 @@ struct AddMatchMenuView: View {
                     icon: "checkmark.circle.fill",
                     color: .blue
                 ) {
+                    print("🎾 AddMatchMenuView: Log completed match button tapped")
                     matchSetupMode = .completedMatch
                     showingMatchSetup = true
+                    print("🎾 AddMatchMenuView: Showing match setup: \(showingMatchSetup)")
                 }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 24)
         }
-        .sheet(isPresented: $showingMatchSetup) {
+        .fullScreenCover(isPresented: $showingMatchSetup) {
             MatchSetupView(mode: matchSetupMode)
+                .onAppear {
+                    print("🎾 AddMatchMenuView: MatchSetupView appeared with mode: \(matchSetupMode)")
+                }
         }
     }
 }

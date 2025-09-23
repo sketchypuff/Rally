@@ -14,6 +14,8 @@ struct AddMatchView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        AddMatchMenuView()
+        NavigationStack {
+            AddMatchMenuView()
+        }
     }
 }
