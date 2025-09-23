@@ -138,8 +138,6 @@ Rally code instructions
 ---
 
 ## 8. Build Steps
-- **B-001 — Project Setup**  
-  - Make a SwiftUI project in Xcode. Name: `BadmintonTracker`. iOS 14+.
 
 - **B-002 — Data Models (D-001 … D-005)**  
   - Create simple structs for Player, Team, Match, Settings, LiveState.  

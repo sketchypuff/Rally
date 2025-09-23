@@ -91,6 +91,7 @@ Rally cursor rules
 - Always add debug logs & comments in the code for easier debug & readability
 - Every time you choose to apply a rule(s), explicitly state the rule{s} in the output. You can abbreviate the rule description to a single word or phrase
 - Do not make any changes, until you have 95% confidence that you know what to build. Ask me follow up questions until you have that confidence.
+- Structure the app in the MVVM system
 
 # Project structure
 - All the files go inside /Rally

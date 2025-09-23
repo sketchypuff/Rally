@@ -1,0 +1,19 @@
+{
+	"name": "xcode build server",
+	"version": "0.2",
+	"bspVersion": "2.0",
+	"languages": [
+		"c",
+		"cpp",
+		"objective-c",
+		"objective-cpp",
+		"swift"
+	],
+	"argv": [
+		"/opt/homebrew/bin/xcode-build-server"
+	],
+	"workspace": "/Users/yshenai/Documents/Vibe code stuff/Rally/Rally/Rally.xcodeproj/project.xcworkspace",
+	"build_root": "/Users/yshenai/Library/Developer/Xcode/DerivedData/Rally-efakgobrncmnrkcdpfdekfscmdta",
+	"scheme": "Rally",
+	"kind": "xcode"
+}
