@@ -46,6 +46,8 @@ struct MatchListView: View {
             }
             .sheet(isPresented: $viewModel.showingAddMatch) {
                 AddMatchView()
+                    .presentationDetents([.height(300), .medium])
+                    .presentationDragIndicator(.visible)
             }
             .onAppear {
                 viewModel.refreshMatches()

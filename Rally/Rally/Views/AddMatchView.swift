@@ -7,32 +7,13 @@
 
 import SwiftUI
 
-/// Add Match view - placeholder for S-002, S-003
+/// Add Match view - Main entry point for S-002, S-003
+/// F-002: Add Match / Start Match Flow with menu and setup
+/// Uses AddMatchMenuView as the main interface
 struct AddMatchView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
-            VStack {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 60))
-                    .foregroundColor(.secondary)
-                Text("Add Match")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                Text("Coming in B-004")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-            }
-            .navigationTitle("Add Match")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
+        AddMatchMenuView()
     }
 }
