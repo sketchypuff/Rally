@@ -23,20 +23,20 @@ struct MatchSetupView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     // MARK: - Header
-                    VStack(spacing: 8) {
-                        Image(systemName: mode == .liveMatch ? "play.circle.fill" : "checkmark.circle.fill")
-                            .font(.system(size: 50))
-                            .foregroundColor(mode == .liveMatch ? .green : .blue)
+                    // VStack(spacing: 8) {
+                    //     Image(systemName: mode == .liveMatch ? "play.circle.fill" : "checkmark.circle.fill")
+                    //         .font(.system(size: 50))
+                    //         .foregroundColor(mode == .liveMatch ? .green : .blue)
                         
-                        Text(mode.title)
-                            .font(.title2)
-                            .fontWeight(.bold)
+                    //     Text(mode.title)
+                    //         .font(.title2)
+                    //         .fontWeight(.bold)
                         
-                        Text(mode.subtitle)
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top, 20)
+                    //     Text(mode.subtitle)
+                    //         .font(.body)
+                    //         .foregroundColor(.secondary)
+                    // }
+                    // .padding(.top, 20)
                     
                     // MARK: - Match Type Selection
                     VStack(alignment: .leading, spacing: 12) {
@@ -69,14 +69,14 @@ struct MatchSetupView: View {
                                     // Total Points in Set
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("Total points in a set")
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
+                                            .font(.body)
+                                            // .fontWeight(.regular)
                                         
                                         TextField("Enter points", value: $viewModel.targetPoints, format: .number)
                                             .keyboardType(.numberPad)
                                             .textFieldStyle(PlainTextFieldStyle())
-                                            .font(.title2)
-                                            .fontWeight(.semibold)
+                                            .font(.body)
+                                            .fontWeight(.regular)
                                             .multilineTextAlignment(.center)
                                             .padding()
                                             .background(Color(.systemBackground))
@@ -94,14 +94,14 @@ struct MatchSetupView: View {
                                     // Total Sets
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("Total sets")
-                                            .font(.subheadline)
-                                            .fontWeight(.medium)
+                                            .font(.body)
+                                            .fontWeight(.regular)
                                         
                                         TextField("Enter sets", value: $viewModel.bestOfSets, format: .number)
                                             .keyboardType(.numberPad)
                                             .textFieldStyle(PlainTextFieldStyle())
-                                            .font(.title2)
-                                            .fontWeight(.semibold)
+                                            .font(.body)
+                                            .fontWeight(.regular)
                                             .multilineTextAlignment(.center)
                                             .padding()
                                             .background(Color(.systemBackground))
@@ -126,6 +126,7 @@ struct MatchSetupView: View {
                                 .onChange(of: viewModel.isDeuceEnabled) { _, _ in
                                     viewModel.toggleDeuce()
                                 }
+                                .font(.body)
                         }
                         .padding()
                         .background(Color(.systemBackground))
@@ -135,8 +136,8 @@ struct MatchSetupView: View {
                     // MARK: - Notes Section
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Notes (Optional)")
-                            .font(.headline)
-                            .fontWeight(.semibold)
+                            .font(.body)
+                            // .fontWeight(.medium)
                         
                         TextField("Add any notes about this match...", text: $viewModel.notes, axis: .vertical)
                             .textFieldStyle(PlainTextFieldStyle())
@@ -152,23 +153,6 @@ struct MatchSetupView: View {
                     .background(Color(.systemBackground))
                     .cornerRadius(12)
                     
-                    // MARK: - Validation Errors
-                    if !viewModel.validationErrors.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            ForEach(viewModel.validationErrors, id: \.self) { error in
-                                HStack {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundColor(.orange)
-                                    Text(error)
-                                        .font(.caption)
-                                        .foregroundColor(.orange)
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color.orange.opacity(0.1))
-                        .cornerRadius(8)
-                    }
                     
                     // MARK: - Action Buttons
                     VStack(spacing: 12) {
@@ -187,11 +171,7 @@ struct MatchSetupView: View {
                         }
                         .disabled(!viewModel.canStartMatch)
                         
-                        // Cancel Button
-                        Button("Cancel") {
-                            dismiss()
-                        }
-                        .foregroundColor(.secondary)
+                    
                     }
                     .padding(.top, 8)
                 }
@@ -199,12 +179,19 @@ struct MatchSetupView: View {
                 .padding(.bottom, 20)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Match Setup")
+            .navigationTitle(mode.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
                         dismiss()
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .medium))
+                            // Text("Back")
+                            //     .font(.system(size: 16))
+                        }
                     }
                 }
             }
@@ -304,9 +291,7 @@ struct DoublesParticipantSelection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Teams")
-                .font(.headline)
-                .fontWeight(.semibold)
+        
             
             VStack(spacing: 12) {
                 // Team A Selection
@@ -342,8 +327,8 @@ struct ParticipantPicker: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
+                .font(.body)
+                .fontWeight(.regular)
             
             Menu {
                 Button("None") {

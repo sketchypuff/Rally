@@ -33,7 +33,7 @@ struct MatchListView: View {
                 }
             }
             .navigationTitle("Your matches")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
