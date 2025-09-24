@@ -23,6 +23,21 @@ struct Player: Identifiable, Codable, Hashable {
         self.notes = notes
     }
     
+    /// Create a copy of this player with updated fields but same ID
+    func updated(name: String? = nil, photo: Data? = nil, notes: String? = nil) -> Player {
+        var updatedPlayer = self
+        if let name = name {
+            updatedPlayer.name = name
+        }
+        if let photo = photo {
+            updatedPlayer.photo = photo
+        }
+        if let notes = notes {
+            updatedPlayer.notes = notes
+        }
+        return updatedPlayer
+    }
+    
     /// Debug helper for logging player info
     var debugDescription: String {
         return "Player(id: \(id), name: \(name), hasPhoto: \(photo != nil), notes: \(notes))"

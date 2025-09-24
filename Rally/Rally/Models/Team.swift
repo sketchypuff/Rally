@@ -36,6 +36,18 @@ struct Team: Identifiable, Codable, Hashable {
     var isValidForDoubles: Bool {
         return playerIds.count >= 2
     }
+    
+    /// Create a copy of this team with updated fields but same ID
+    func updated(name: String? = nil, playerIds: [UUID]? = nil) -> Team {
+        var updatedTeam = self
+        if let name = name {
+            updatedTeam.name = name
+        }
+        if let playerIds = playerIds {
+            updatedTeam.playerIds = playerIds
+        }
+        return updatedTeam
+    }
 }
 
 // MARK: - Preview Data

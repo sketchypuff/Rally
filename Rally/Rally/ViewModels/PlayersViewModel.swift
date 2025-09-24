@@ -102,21 +102,21 @@ final class PlayersViewModel {
     
     /// Add a new team
     func addTeam(_ team: Team) {
-        print("➕ PlayersViewModel: Adding team \(team.name)")
+        print("➕ PlayersViewModel: Adding team \(team.name ?? "Unnamed")")
         dataManager.addTeam(team)
         refreshData()
     }
     
     /// Update an existing team
     func updateTeam(_ team: Team) {
-        print("✏️ PlayersViewModel: Updating team \(team.name)")
+        print("✏️ PlayersViewModel: Updating team \(team.name ?? "Unnamed")")
         dataManager.updateTeam(team)
         refreshData()
     }
     
     /// Delete a team
     func deleteTeam(_ team: Team) {
-        print("🗑️ PlayersViewModel: Deleting team \(team.name)")
+        print("🗑️ PlayersViewModel: Deleting team \(team.name ?? "Unnamed")")
         dataManager.deleteTeam(team)
         refreshData()
     }
