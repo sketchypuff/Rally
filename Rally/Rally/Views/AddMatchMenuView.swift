@@ -12,6 +12,7 @@ import SwiftUI
 struct AddMatchMenuView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingMatchSetup = false
+    @State private var showingLogCompletedMatch = false
     @State private var matchSetupMode: MatchSetupMode = .liveMatch
     
     var body: some View {
@@ -39,9 +40,8 @@ struct AddMatchMenuView: View {
                     color: .blue
                 ) {
                     print("🎾 AddMatchMenuView: Log completed match button tapped")
-                    matchSetupMode = .completedMatch
-                    showingMatchSetup = true
-                    print("🎾 AddMatchMenuView: Showing match setup: \(showingMatchSetup)")
+                    showingLogCompletedMatch = true
+                    print("🎾 AddMatchMenuView: Showing log completed match: \(showingLogCompletedMatch)")
                 }
             }
             .padding(.horizontal, 20)
@@ -51,6 +51,12 @@ struct AddMatchMenuView: View {
             MatchSetupView(mode: matchSetupMode)
                 .onAppear {
                     print("🎾 AddMatchMenuView: MatchSetupView appeared with mode: \(matchSetupMode)")
+                }
+        }
+        .fullScreenCover(isPresented: $showingLogCompletedMatch) {
+            LogCompletedMatchView()
+                .onAppear {
+                    print("🎾 AddMatchMenuView: LogCompletedMatchView appeared")
                 }
         }
     }

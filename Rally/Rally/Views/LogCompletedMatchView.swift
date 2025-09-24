@@ -1,5 +1,5 @@
 //
-//  MatchSetupView.swift
+//  LogCompletedMatchView.swift
 //  Rally
 //
 //  Created by Yash Shenai on 23/09/25.
@@ -7,61 +7,39 @@
 
 import SwiftUI
 
-/// Match Setup view (S-003)
-/// F-002: Pick Player/Team A and B, target points, best-of sets, toggle for deuce
-/// Error handling: block start if required fields are empty
-struct MatchSetupView: View {
+/// Log Completed Match view
+/// F-002: Log completed match with date picker, player selection, sets management, and notes
+/// Uses MVVM pattern with LogCompletedMatchViewModel
+struct LogCompletedMatchView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var viewModel = AddMatchViewModel()
+    @State private var viewModel = LogCompletedMatchViewModel()
     @State private var showingAlert = false
     @State private var alertMessage = ""
-    
-    let mode: MatchSetupMode
     
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
-                    // MARK: - Header
-                    // VStack(spacing: 8) {
-                    //     Image(systemName: mode == .liveMatch ? "play.circle.fill" : "checkmark.circle.fill")
-                    //         .font(.system(size: 50))
-                    //         .foregroundColor(mode == .liveMatch ? .green : .blue)
-                        
-                    //     Text(mode.title)
-                    //         .font(.title2)
-                    //         .fontWeight(.bold)
-                        
-                    //     Text(mode.subtitle)
-                    //         .font(.body)
-                    //         .foregroundColor(.secondary)
-                    // }
-                    // .padding(.top, 20)
-                    
                     // MARK: - Match Type Selection
-                    VStack(alignment: .leading, spacing: 12) {
-                        
-                        
-                        Picker("Match Type", selection: $viewModel.matchType) {
-                            Text("Singles").tag(MatchType.singles)
-                            Text("Doubles").tag(MatchType.doubles)
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .onChange(of: viewModel.matchType) { _, _ in
-                            viewModel.setMatchType(viewModel.matchType)
-                        }
+                    Picker("Match Type", selection: $viewModel.matchType) {
+                        Text("Singles").tag(MatchType.singles)
+                        Text("Doubles").tag(MatchType.doubles)
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                    .onChange(of: viewModel.matchType) { _, _ in
+                        viewModel.setMatchType(viewModel.matchType)
                     }
                     
                     // MARK: - Participant Selection
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Add players")
                             .font(.headline)
-                            .foregroundColor(.secondary)
+                            .fontWeight(.semibold)
                         
                         if viewModel.matchType == .singles {
-                            SinglesParticipantSelectionAddMatch(viewModel: viewModel)
+                            SinglesParticipantSelection(viewModel: viewModel)
                         } else {
-                            DoublesParticipantSelectionAddMatch(viewModel: viewModel)
+                            DoublesParticipantSelection(viewModel: viewModel)
                         }
                     }
                     
@@ -69,7 +47,7 @@ struct MatchSetupView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Match settings")
                             .font(.headline)
-                            .foregroundColor(.secondary)
+                            .fontWeight(.semibold)
                         
                         VStack(spacing: 0) {
                             // Date picker
@@ -82,10 +60,7 @@ struct MatchSetupView: View {
                                 
                                 DatePicker(
                                     "",
-                                    selection: Binding(
-                                        get: { viewModel.matchDate },
-                                        set: { viewModel.matchDate = $0 }
-                                    ),
+                                    selection: $viewModel.matchDate,
                                     displayedComponents: [.date]
                                 )
                                 .datePickerStyle(CompactDatePickerStyle())
@@ -98,7 +73,7 @@ struct MatchSetupView: View {
                                 .padding(.leading, 16)
                             
                             // Points per set
-                            MatchSettingRow(
+                            MatchSettingRowLog(
                                 title: "Points per set",
                                 value: $viewModel.targetPoints,
                                 placeholder: "Enter points",
@@ -116,7 +91,7 @@ struct MatchSetupView: View {
                                 .padding(.leading, 16)
                             
                             // Number of sets
-                            MatchSettingRow(
+                            MatchSettingRowLog(
                                 title: "Number of sets",
                                 value: $viewModel.bestOfSets,
                                 placeholder: "Enter sets",
@@ -156,6 +131,9 @@ struct MatchSetupView: View {
                         .cornerRadius(12)
                     }
                     
+                    // MARK: - Sets Section
+                    LogSetsSection(viewModel: viewModel)
+                    
                     // MARK: - Notes Section
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Notes")
@@ -174,33 +152,58 @@ struct MatchSetupView: View {
                             }
                     }
                     
-                    
                     // MARK: - Action Buttons
-                    VStack(spacing: 12) {
-                        // Start/Save Button
-                        Button(action: handleStartAction) {
-                            HStack {
-                                Image(systemName: mode == .liveMatch ? "play.fill" : "checkmark.circle.fill")
-                                Text(mode == .liveMatch ? "Start Live Match" : "Save Match")
+                    VStack(spacing: 16) {
+                        // Log Completed Match Button
+                        Button(action: handleSaveMatch) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 20))
+                                Text("Log Completed Match")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
                             }
-                            .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(viewModel.canStartMatch ? (mode == .liveMatch ? Color.green : Color.blue) : Color.gray)
-                            .cornerRadius(12)
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 24)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(viewModel.canSaveMatch ? Color.blue : Color.gray)
+                            )
+                            .shadow(color: viewModel.canSaveMatch ? Color.blue.opacity(0.3) : Color.clear, radius: 8, x: 0, y: 4)
                         }
-                        .disabled(!viewModel.canStartMatch)
+                        .disabled(!viewModel.canSaveMatch)
+                        .scaleEffect(viewModel.canSaveMatch ? 1.0 : 0.95)
+                        .animation(.easeInOut(duration: 0.1), value: viewModel.canSaveMatch)
                         
-                    
+                        // Validation errors display
+                        if !viewModel.validationErrors.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                ForEach(viewModel.validationErrors, id: \.self) { error in
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundColor(.orange)
+                                            .font(.caption)
+                                        Text(error)
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(Color.orange.opacity(0.1))
+                            .cornerRadius(8)
+                        }
                     }
-                    .padding(.top, 8)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(mode.title)
+            .navigationTitle("Log Completed Match")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -210,8 +213,6 @@ struct MatchSetupView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 16, weight: .medium))
-                            // Text("Back")
-                            //     .font(.system(size: 16))
                         }
                     }
                 }
@@ -231,54 +232,33 @@ struct MatchSetupView: View {
     
     // MARK: - Actions
     
-    private func handleStartAction() {
-        print("🎾 MatchSetupView: Handling start action for mode: \(mode)")
+    private func handleSaveMatch() {
+        print("💾 LogCompletedMatchView: Logging completed match")
         
-        guard viewModel.canStartMatch else {
-            print("❌ MatchSetupView: Cannot start match - validation failed")
+        guard viewModel.canSaveMatch else {
+            print("❌ LogCompletedMatchView: Cannot log match - validation failed")
             return
         }
         
-        if mode == .liveMatch {
-            handleLiveMatchStart()
-        } else {
-            handleCompletedMatchSave()
-        }
-    }
-    
-    private func handleLiveMatchStart() {
-        print("🎾 MatchSetupView: Starting live match")
-        
-        guard let (match, liveState) = viewModel.startLiveMatch() else {
-            alertMessage = "Failed to start live match. Please try again."
+        guard viewModel.saveCompletedMatch() != nil else {
+            alertMessage = "Failed to log match. Please try again."
             showingAlert = true
             return
         }
         
-        // Save the match and live state
-        viewModel.dataManager.addMatch(match)
-        viewModel.dataManager.setLiveMatchState(liveState)
-        
-        // TODO: Navigate to live scoring screen (B-005)
-        print("✅ MatchSetupView: Live match started successfully")
+        print("✅ LogCompletedMatchView: Completed match logged successfully")
         dismiss()
-    }
-    
-    private func handleCompletedMatchSave() {
-        print("💾 MatchSetupView: Navigating to LogCompletedMatchView")
-        // For completed match mode, we'll show the LogCompletedMatchView instead
-        // This will be handled by the parent view
     }
 }
 
 // MARK: - Singles Participant Selection
-struct SinglesParticipantSelectionAddMatch: View {
-    let viewModel: AddMatchViewModel
+struct SinglesParticipantSelection: View {
+    let viewModel: LogCompletedMatchViewModel
     
     var body: some View {
         VStack(spacing: 0) {
             // Player A Selection
-            PlayerSelectionRowAddMatch(
+            PlayerSelectionRow(
                 title: "Player 1",
                 selectedId: viewModel.selectedPlayerAId,
                 participants: viewModel.availablePlayers,
@@ -289,7 +269,7 @@ struct SinglesParticipantSelectionAddMatch: View {
                 .padding(.leading, 16)
             
             // Player B Selection
-            PlayerSelectionRowAddMatch(
+            PlayerSelectionRow(
                 title: "Player 2",
                 selectedId: viewModel.selectedPlayerBId,
                 participants: viewModel.availablePlayers,
@@ -302,13 +282,13 @@ struct SinglesParticipantSelectionAddMatch: View {
 }
 
 // MARK: - Doubles Participant Selection
-struct DoublesParticipantSelectionAddMatch: View {
-    let viewModel: AddMatchViewModel
+struct DoublesParticipantSelection: View {
+    let viewModel: LogCompletedMatchViewModel
     
     var body: some View {
         VStack(spacing: 0) {
             // Team A Selection
-            PlayerSelectionRowAddMatch(
+            PlayerSelectionRow(
                 title: "Team 1",
                 selectedId: viewModel.selectedTeamAId,
                 participants: viewModel.availableTeams,
@@ -319,7 +299,7 @@ struct DoublesParticipantSelectionAddMatch: View {
                 .padding(.leading, 16)
             
             // Team B Selection
-            PlayerSelectionRowAddMatch(
+            PlayerSelectionRow(
                 title: "Team 2",
                 selectedId: viewModel.selectedTeamBId,
                 participants: viewModel.availableTeams,
@@ -331,8 +311,9 @@ struct DoublesParticipantSelectionAddMatch: View {
     }
 }
 
+
 // MARK: - Match Setting Row
-struct MatchSettingRow: View {
+struct MatchSettingRowLog: View {
     let title: String
     @Binding var value: Int
     let placeholder: String
@@ -372,7 +353,7 @@ struct MatchSettingRow: View {
 }
 
 // MARK: - Player Selection Row
-struct PlayerSelectionRowAddMatch: View {
+struct PlayerSelectionRow: View {
     let title: String
     let selectedId: UUID?
     let participants: [any ParticipantSelectable]
@@ -420,8 +401,8 @@ struct PlayerSelectionRowAddMatch: View {
     }
 }
 
-// MARK: - Participant Picker (Legacy)
-struct ParticipantPickerAddMatch: View {
+// MARK: - Participant Picker (Legacy - keeping for MatchSetupView compatibility)
+struct ParticipantPicker: View {
     let title: String
     let selectedId: UUID?
     let participants: [any ParticipantSelectable]
@@ -470,29 +451,180 @@ struct ParticipantPickerAddMatch: View {
     }
 }
 
-// MARK: - Participant Selectable Protocol
-protocol ParticipantSelectable {
-    var id: UUID { get }
-    var displayName: String { get }
-}
-
-extension Player: ParticipantSelectable {
-    var displayName: String {
-        return name
+// MARK: - Log Sets Section
+struct LogSetsSection: View {
+    let viewModel: LogCompletedMatchViewModel
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // MARK: - Section Header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Sets")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            
+            // MARK: - Sets Grid
+            VStack(spacing: 0) {
+                // Player Headers
+                HStack(spacing: 0) {
+                    // Player A Header
+                    Text(viewModel.getPlayerAName())
+                        .font(.headline)
+                       
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.trailing, 8) // Add spacing between columns
+                    
+                    // Player B Header
+                    Text(viewModel.getPlayerBName())
+                        .font(.headline)
+                       
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 8) // Add spacing between columns
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                
+                // Sets Rows in List for proper swipe actions
+                List {
+                    ForEach(Array(viewModel.setScores.enumerated()), id: \.offset) { index, setScore in
+                        LogSetRow(
+                            setNumber: index + 1,
+                            setScore: setScore,
+                            onPlayerAPointsChanged: { newPoints in
+                                viewModel.updateSetScore(at: index, playerAPoints: newPoints, playerBPoints: setScore.playerBPoints)
+                            },
+                            onPlayerBPointsChanged: { newPoints in
+                                viewModel.updateSetScore(at: index, playerAPoints: setScore.playerAPoints, playerBPoints: newPoints)
+                            },
+                            onRemoveSet: {
+                                print("➖ LogSetsSection: Remove set \(index + 1)")
+                                viewModel.removeSet(at: index)
+                            },
+                            canRemove: viewModel.setScores.count > 1,
+                            isLastRow: index == viewModel.setScores.count - 1 // Pass isLastRow parameter
+                        )
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                    }
+                }
+                .listStyle(PlainListStyle())
+                .frame(height: CGFloat(max(3, viewModel.setScores.count) * 70)) // Fixed height for 3 sets minimum, compact spacing
+            }
+            .background(Color(.systemBackground))
+            .cornerRadius(12)
+        }
     }
 }
 
-extension Team: ParticipantSelectable {
-    var displayName: String {
-        return name ?? "Unnamed Team"
+// MARK: - Log Set Row
+struct LogSetRow: View {
+    let setNumber: Int
+    let setScore: SetScore
+    let onPlayerAPointsChanged: (Int) -> Void
+    let onPlayerBPointsChanged: (Int) -> Void
+    let onRemoveSet: () -> Void
+    let canRemove: Bool
+    let isLastRow: Bool // Add parameter to identify last row
+    
+    @State private var playerAPointsText: String = ""
+    @State private var playerBPointsText: String = ""
+    
+    var body: some View {
+        HStack(spacing: 16) { // Add spacing between columns
+            // Player A Column
+            VStack(spacing: 4) { // Reduced spacing for compact layout
+                Text("Set \(setNumber)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                TextField("0", text: $playerAPointsText)
+                    .keyboardType(.numberPad) // Numerical keyboard
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .font(.body)
+                    .multilineTextAlignment(.leading)
+                    .padding(.vertical, 6) // Reduced padding for compact layout
+                    .padding(.horizontal, 0)
+                    .background(Color.clear)
+                    .overlay(
+                        // Only show bottom divider if not the last row
+                        !isLastRow ? Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(height: 1) : nil,
+                        alignment: .bottom
+                    )
+                    .onChange(of: playerAPointsText) { _, newValue in
+                        if let points = Int(newValue), points >= 0 {
+                            onPlayerAPointsChanged(points)
+                        }
+                    }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Player B Column
+            VStack(spacing: 4) { // Reduced spacing for compact layout
+                Text("Set \(setNumber)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                TextField("0", text: $playerBPointsText)
+                    .keyboardType(.numberPad) // Numerical keyboard
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .font(.body)
+                    .multilineTextAlignment(.leading)
+                    .padding(.vertical, 6) // Reduced padding for compact layout
+                    .padding(.horizontal, 0)
+                    .background(Color.clear)
+                    .overlay(
+                        // Only show bottom divider if not the last row
+                        !isLastRow ? Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(height: 1) : nil,
+                        alignment: .bottom
+                    )
+                    .onChange(of: playerBPointsText) { _, newValue in
+                        if let points = Int(newValue), points >= 0 {
+                            onPlayerBPointsChanged(points)
+                        }
+                    }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8) // Reduced vertical padding for compact layout
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            if canRemove {
+                Button(action: onRemoveSet) {
+                    Label("Delete", systemImage: "trash")
+                }
+                .tint(.red)
+            }
+        }
+        .onAppear {
+            playerAPointsText = String(setScore.playerAPoints)
+            playerBPointsText = String(setScore.playerBPoints)
+        }
+        .onChange(of: setScore.playerAPoints) { _, newValue in
+            playerAPointsText = String(newValue)
+        }
+        .onChange(of: setScore.playerBPoints) { _, newValue in
+            playerBPointsText = String(newValue)
+        }
     }
 }
 
 // MARK: - Previews
-#Preview("Live Match Setup") {
-    MatchSetupView(mode: .liveMatch)
-}
-
-#Preview("Completed Match Setup") {
-    MatchSetupView(mode: .completedMatch)
+#Preview("Log Completed Match") {
+    LogCompletedMatchView()
 }

@@ -1,5 +1,5 @@
 //
-//  AddMatchViewModel.swift
+//  LogCompletedMatchViewModel.swift
 //  Rally
 //
 //  Created by Yash Shenai on 23/09/25.
@@ -8,11 +8,11 @@
 import Foundation
 import SwiftUI
 
-/// ViewModel for Add Match flow (S-002, S-003) & F-002
-/// Handles business logic for match creation and setup
+/// ViewModel for Log Completed Match flow
+/// Handles business logic for logging completed matches with scores
 /// Follows MVVM pattern by separating view logic from data management
 @Observable
-final class AddMatchViewModel {
+final class LogCompletedMatchViewModel {
     // MARK: - Dependencies
     let dataManager: DataManager
     
@@ -22,7 +22,7 @@ final class AddMatchViewModel {
     var isLoading = false
     var errorMessage: String?
     
-    // MARK: - Match Setup Properties
+    // MARK: - Match Properties
     var matchDate: Date = Date()
     var matchType: MatchType = .singles
     var selectedPlayerAId: UUID?
@@ -32,10 +32,13 @@ final class AddMatchViewModel {
     var targetPoints: Int = 21
     var bestOfSets: Int = 3
     var notes: String = ""
+    
+    // MARK: - Sets Management
+    var setScores: [SetScore] = []
     var isDeuceEnabled: Bool = true
     
     // MARK: - Validation Properties
-    var canStartMatch: Bool {
+    var canSaveMatch: Bool {
         return validateMatchSetup()
     }
     
@@ -72,6 +75,10 @@ final class AddMatchViewModel {
             errors.append("Best of sets must be an odd number (1, 3, 5, etc.)")
         }
         
+        if setScores.isEmpty {
+            errors.append("Please enter at least one set score")
+        }
+        
         return errors
     }
     
@@ -100,7 +107,8 @@ final class AddMatchViewModel {
     
     init(dataManager: DataManager = DataManager.shared) {
         self.dataManager = dataManager
-        print("🏗️ AddMatchViewModel: Initializing with DataManager")
+        print("🏗️ LogCompletedMatchViewModel: Initializing with DataManager")
+        initializeDefaultSets()
         loadData()
     }
     
@@ -108,7 +116,7 @@ final class AddMatchViewModel {
     
     /// Load players and teams from DataManager
     private func loadData() {
-        print("🔄 AddMatchViewModel: Loading players and teams from DataManager")
+        print("🔄 LogCompletedMatchViewModel: Loading players and teams from DataManager")
         isLoading = true
         errorMessage = nil
         
@@ -117,13 +125,13 @@ final class AddMatchViewModel {
             self.players = self.dataManager.players
             self.teams = self.dataManager.teams
             self.isLoading = false
-            print("✅ AddMatchViewModel: Loaded \(self.players.count) players and \(self.teams.count) teams")
+            print("✅ LogCompletedMatchViewModel: Loaded \(self.players.count) players and \(self.teams.count) teams")
         }
     }
     
     /// Refresh data from DataManager
     func refreshData() {
-        print("🔄 AddMatchViewModel: Refreshing data")
+        print("🔄 LogCompletedMatchViewModel: Refreshing data")
         loadData()
     }
     
@@ -131,7 +139,7 @@ final class AddMatchViewModel {
     
     /// Set match type and reset selections
     func setMatchType(_ type: MatchType) {
-        print("🎾 AddMatchViewModel: Setting match type to \(type)")
+        print("🎾 LogCompletedMatchViewModel: Setting match type to \(type)")
         matchType = type
         
         // Reset selections when changing match type
@@ -143,13 +151,13 @@ final class AddMatchViewModel {
     
     /// Set target points for the match
     func setTargetPoints(_ points: Int) {
-        print("🎯 AddMatchViewModel: Setting target points to \(points)")
+        print("🎯 LogCompletedMatchViewModel: Setting target points to \(points)")
         targetPoints = max(1, points)
     }
     
     /// Set best of sets for the match
     func setBestOfSets(_ sets: Int) {
-        print("🏆 AddMatchViewModel: Setting best of sets to \(sets)")
+        print("🏆 LogCompletedMatchViewModel: Setting best of sets to \(sets)")
         // Ensure it's an odd number
         let oddSets = sets % 2 == 0 ? sets + 1 : sets
         bestOfSets = max(1, oddSets)
@@ -157,13 +165,13 @@ final class AddMatchViewModel {
     
     /// Set notes for the match
     func setNotes(_ notes: String) {
-        print("📝 AddMatchViewModel: Setting notes")
+        print("📝 LogCompletedMatchViewModel: Setting notes")
         self.notes = notes
     }
     
     /// Toggle deuce rule
     func toggleDeuce() {
-        print("🔄 AddMatchViewModel: Toggling deuce rule to \(!isDeuceEnabled)")
+        print("🔄 LogCompletedMatchViewModel: Toggling deuce rule to \(!isDeuceEnabled)")
         isDeuceEnabled.toggle()
     }
     
@@ -171,36 +179,94 @@ final class AddMatchViewModel {
     
     /// Select player A for singles match
     func selectPlayerA(_ playerId: UUID?) {
-        print("👤 AddMatchViewModel: Selecting player A: \(playerId?.uuidString ?? "nil")")
+        print("👤 LogCompletedMatchViewModel: Selecting player A: \(playerId?.uuidString ?? "nil")")
         selectedPlayerAId = playerId
     }
     
     /// Select player B for singles match
     func selectPlayerB(_ playerId: UUID?) {
-        print("👤 AddMatchViewModel: Selecting player B: \(playerId?.uuidString ?? "nil")")
+        print("👤 LogCompletedMatchViewModel: Selecting player B: \(playerId?.uuidString ?? "nil")")
         selectedPlayerBId = playerId
     }
     
     /// Select team A for doubles match
     func selectTeamA(_ teamId: UUID?) {
-        print("👥 AddMatchViewModel: Selecting team A: \(teamId?.uuidString ?? "nil")")
+        print("👥 LogCompletedMatchViewModel: Selecting team A: \(teamId?.uuidString ?? "nil")")
         selectedTeamAId = teamId
     }
     
     /// Select team B for doubles match
     func selectTeamB(_ teamId: UUID?) {
-        print("👥 AddMatchViewModel: Selecting team B: \(teamId?.uuidString ?? "nil")")
+        print("👥 LogCompletedMatchViewModel: Selecting team B: \(teamId?.uuidString ?? "nil")")
         selectedTeamBId = teamId
+    }
+    
+    // MARK: - Sets Management
+    
+    /// Initialize with 3 default blank sets
+    private func initializeDefaultSets() {
+        print("🎾 LogCompletedMatchViewModel: Initializing 3 default blank sets")
+        setScores = [
+            SetScore(),
+            SetScore(),
+            SetScore()
+        ]
+    }
+    
+    /// Add a new set
+    func addSet() {
+        print("➕ LogCompletedMatchViewModel: Adding new set")
+        setScores.append(SetScore())
+    }
+    
+    /// Remove a set at specific index
+    func removeSet(at index: Int) {
+        guard index >= 0 && index < setScores.count else {
+            print("❌ LogCompletedMatchViewModel: Invalid set index for removal: \(index)")
+            return
+        }
+        
+        print("➖ LogCompletedMatchViewModel: Removing set at index \(index)")
+        setScores.remove(at: index)
+    }
+    
+    /// Update set score at specific index
+    func updateSetScore(at index: Int, playerAPoints: Int, playerBPoints: Int) {
+        guard index >= 0 && index < setScores.count else {
+            print("❌ LogCompletedMatchViewModel: Invalid set index for update: \(index)")
+            return
+        }
+        
+        print("📊 LogCompletedMatchViewModel: Updating set \(index + 1) score: A=\(playerAPoints), B=\(playerBPoints)")
+        setScores[index] = SetScore(playerAPoints: playerAPoints, playerBPoints: playerBPoints)
+    }
+    
+    /// Get player A name for display
+    func getPlayerAName() -> String {
+        if matchType == .singles {
+            return getPlayer(by: selectedPlayerAId)?.name ?? "Select Player A"
+        } else {
+            return getTeam(by: selectedTeamAId)?.name ?? "Select Team A"
+        }
+    }
+    
+    /// Get player B name for display
+    func getPlayerBName() -> String {
+        if matchType == .singles {
+            return getPlayer(by: selectedPlayerBId)?.name ?? "Select Player B"
+        } else {
+            return getTeam(by: selectedTeamBId)?.name ?? "Select Team B"
+        }
     }
     
     // MARK: - Match Creation
     
-    /// Create a new match with current setup
-    func createMatch() -> Match? {
-        print("🎾 AddMatchViewModel: Creating new match")
+    /// Create a completed match with current setup and scores
+    func createCompletedMatch() -> Match? {
+        print("🎾 LogCompletedMatchViewModel: Creating completed match")
         
         guard validateMatchSetup() else {
-            print("❌ AddMatchViewModel: Match validation failed")
+            print("❌ LogCompletedMatchViewModel: Match validation failed")
             return nil
         }
         
@@ -218,38 +284,29 @@ final class AddMatchViewModel {
         // Set the match date
         match.date = matchDate
         
-        print("✅ AddMatchViewModel: Created match: \(match.debugDescription)")
+        // Set the completed set scores
+        match.setScores = setScores
+        
+        // Determine match result based on set scores
+        match.result = determineMatchResult()
+        
+        print("✅ LogCompletedMatchViewModel: Created completed match: \(match.debugDescription)")
         return match
     }
     
-    /// Start a live match with current setup
-    func startLiveMatch() -> (Match, LiveMatchState)? {
-        print("🎾 AddMatchViewModel: Starting live match")
-        
-        guard let match = createMatch() else {
-            print("❌ AddMatchViewModel: Failed to create match for live scoring")
-            return nil
-        }
-        
-        let liveState = LiveMatchState(matchId: match.id)
-        
-        print("✅ AddMatchViewModel: Started live match: \(match.debugDescription)")
-        return (match, liveState)
-    }
-    
-    /// Save a completed match with current setup
+    /// Save the completed match
     func saveCompletedMatch() -> Match? {
-        print("💾 AddMatchViewModel: Saving completed match")
+        print("💾 LogCompletedMatchViewModel: Saving completed match")
         
-        guard let match = createMatch() else {
-            print("❌ AddMatchViewModel: Failed to create match for saving")
+        guard let match = createCompletedMatch() else {
+            print("❌ LogCompletedMatchViewModel: Failed to create match for saving")
             return nil
         }
         
         // Add the match to DataManager
         dataManager.addMatch(match)
         
-        print("✅ AddMatchViewModel: Saved completed match: \(match.debugDescription)")
+        print("✅ LogCompletedMatchViewModel: Saved completed match: \(match.debugDescription)")
         return match
     }
     
@@ -261,18 +318,45 @@ final class AddMatchViewModel {
     }
     
     /// Get player by ID
-    func getPlayer(by id: UUID) -> Player? {
+    func getPlayer(by id: UUID?) -> Player? {
+        guard let id = id else { return nil }
         return players.first { $0.id == id }
     }
     
     /// Get team by ID
-    func getTeam(by id: UUID) -> Team? {
+    func getTeam(by id: UUID?) -> Team? {
+        guard let id = id else { return nil }
         return teams.first { $0.id == id }
+    }
+    
+    /// Determine match result based on set scores
+    private func determineMatchResult() -> MatchResult {
+        guard !setScores.isEmpty else { return .inProgress }
+        
+        var playerASetsWon = 0
+        var playerBSetsWon = 0
+        
+        for setScore in setScores {
+            if setScore.playerAPoints > setScore.playerBPoints {
+                playerASetsWon += 1
+            } else if setScore.playerBPoints > setScore.playerAPoints {
+                playerBSetsWon += 1
+            }
+        }
+        
+        // Assuming the current user is Player A
+        if playerASetsWon > playerBSetsWon {
+            return .won
+        } else if playerBSetsWon > playerASetsWon {
+            return .lost
+        } else {
+            return .inProgress
+        }
     }
     
     /// Reset all form data
     func resetForm() {
-        print("🔄 AddMatchViewModel: Resetting form")
+        print("🔄 LogCompletedMatchViewModel: Resetting form")
         matchDate = Date()
         matchType = .singles
         selectedPlayerAId = nil
@@ -284,14 +368,15 @@ final class AddMatchViewModel {
         notes = ""
         isDeuceEnabled = true
         errorMessage = nil
+        initializeDefaultSets()
     }
 }
 
 // MARK: - Preview Support
-extension AddMatchViewModel {
+extension LogCompletedMatchViewModel {
     /// Create a preview instance with sample data
-    static func preview() -> AddMatchViewModel {
-        let viewModel = AddMatchViewModel()
+    static func preview() -> LogCompletedMatchViewModel {
+        let viewModel = LogCompletedMatchViewModel()
         // Add sample data for preview
         return viewModel
     }
