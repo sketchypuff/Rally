@@ -15,6 +15,9 @@ struct MatchSetupView: View {
     @State private var viewModel = AddMatchViewModel()
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @State private var showingLiveScoring = false
+    @State private var liveMatch: Match?
+    @State private var liveState: LiveMatchState?
     
     let mode: MatchSetupMode
     
@@ -227,21 +230,48 @@ struct MatchSetupView: View {
         } message: {
             Text(alertMessage)
         }
+        .fullScreenCover(isPresented: $showingLiveScoring) {
+            liveScoringCoverView
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    @ViewBuilder
+    private var liveScoringCoverView: some View {
+        if let match = liveMatch, let state = liveState {
+            LiveScoringView(match: match, liveState: state)
+        } else {
+            // Fallback view if data is missing
+            VStack {
+                Text("Error: Missing match data")
+                    .font(.headline)
+                    .foregroundColor(.red)
+                Button("Close") {
+                    showingLiveScoring = false
+                }
+            }
+            .padding()
+        }
     }
     
     // MARK: - Actions
     
     private func handleStartAction() {
         print("🎾 MatchSetupView: Handling start action for mode: \(mode)")
+        print("🎾 MatchSetupView: canStartMatch = \(viewModel.canStartMatch)")
         
         guard viewModel.canStartMatch else {
             print("❌ MatchSetupView: Cannot start match - validation failed")
+            print("❌ MatchSetupView: Validation errors: \(viewModel.validationErrors)")
             return
         }
         
         if mode == .liveMatch {
+            print("🎾 MatchSetupView: Calling handleLiveMatchStart()")
             handleLiveMatchStart()
         } else {
+            print("🎾 MatchSetupView: Calling handleCompletedMatchSave()")
             handleCompletedMatchSave()
         }
     }
@@ -250,18 +280,31 @@ struct MatchSetupView: View {
         print("🎾 MatchSetupView: Starting live match")
         
         guard let (match, liveState) = viewModel.startLiveMatch() else {
+            print("❌ MatchSetupView: Failed to create match and live state")
             alertMessage = "Failed to start live match. Please try again."
             showingAlert = true
             return
         }
         
+        print("✅ MatchSetupView: Created match: \(match.id)")
+        print("✅ MatchSetupView: Created live state for match: \(liveState.matchId)")
+        
         // Save the match and live state
         viewModel.dataManager.addMatch(match)
         viewModel.dataManager.setLiveMatchState(liveState)
         
-        // TODO: Navigate to live scoring screen (B-005)
+        // Set up live scoring navigation
+        self.liveMatch = match
+        self.liveState = liveState
+        print("🎾 MatchSetupView: Set liveMatch and liveState properties")
+        
+        // Trigger the fullScreenCover
+        DispatchQueue.main.async {
+            self.showingLiveScoring = true
+            print("🎾 MatchSetupView: Set showingLiveScoring = true")
+        }
+        
         print("✅ MatchSetupView: Live match started successfully")
-        dismiss()
     }
     
     private func handleCompletedMatchSave() {
